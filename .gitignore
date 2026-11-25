@@ -1,0 +1,5 @@
+.env
+data/
+n8n-data/
+bookings.csv
+__pycache__/

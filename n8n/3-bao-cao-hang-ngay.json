@@ -1,0 +1,85 @@
+{
+  "name": "Casa - Bao cao dat ban 22h",
+  "nodes": [
+    {
+      "id": "1",
+      "name": "Moi ngay 22h",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        300
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 22 * * *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "2",
+      "name": "Lay bao cao",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        220,
+        300
+      ],
+      "parameters": {
+        "url": "={{ $env.OPS_API }}/report",
+        "options": {}
+      },
+      "retryOnFail": true,
+      "maxTries": 3
+    },
+    {
+      "id": "3",
+      "name": "Gui quan ly",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        440,
+        300
+      ],
+      "parameters": {
+        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
+        "text": "={{ $json.text }}",
+        "additionalFields": {}
+      }
+    }
+  ],
+  "connections": {
+    "Moi ngay 22h": {
+      "main": [
+        [
+          {
+            "node": "Lay bao cao",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lay bao cao": {
+      "main": [
+        [
+          {
+            "node": "Gui quan ly",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "errorWorkflow": "casa-error-alert"
+  },
+  "active": false
+}

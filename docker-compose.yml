@@ -1,0 +1,18 @@
+# Chạy trên VPS Linux: docker compose up -d
+services:
+  ops-api:
+    build: .
+    env_file: .env
+    volumes: [ "./data:/data" ]
+    ports: [ "8080:8080" ]
+    restart: unless-stopped
+  n8n:
+    image: docker.n8n.io/n8nio/n8n:latest
+    env_file: .env
+    environment:
+      - GENERIC_TIMEZONE=Asia/Ho_Chi_Minh
+      - OPS_API=http://ops-api:8080
+      - N8N_BLOCK_ENV_ACCESS_IN_NODE=false
+    volumes: [ "./n8n-data:/home/node/.n8n", "./n8n:/workflows:ro" ]
+    ports: [ "5678:5678" ]
+    restart: unless-stopped

@@ -1,0 +1,49 @@
+{
+  "id": "casa-error-alert",
+  "name": "Casa - Canh bao loi ve Telegram",
+  "nodes": [
+    {
+      "id": "1",
+      "name": "Khi workflow loi",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        300
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "2",
+      "name": "Bao loi Telegram",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        240,
+        300
+      ],
+      "parameters": {
+        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
+        "text": "=⚠️ Workflow lỗi: {{ $json.workflow.name }}\nNode: {{ $json.execution.lastNodeExecuted }}\nLỗi: {{ $json.execution.error.message }}\nXem: {{ $json.execution.url }}",
+        "additionalFields": {}
+      }
+    }
+  ],
+  "connections": {
+    "Khi workflow loi": {
+      "main": [
+        [
+          {
+            "node": "Bao loi Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "active": false
+}
