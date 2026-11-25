@@ -57,7 +57,7 @@ Xem [docs/HUONG-DAN.md](docs/HUONG-DAN.md). Tóm tắt: `cp .env.example .env`, 
 
 ## Kết quả kiểm thật
 
-- 28/28 bài kiểm thử đạt (thêm 6 bài cho các lỗi Muse tìm ra ở vòng 2).
+- 32/32 bài kiểm thử đạt (gồm 6 bài cho lỗi Muse tìm ra ở vòng 2 và 4 bài cho phần đọc tin nhắn bằng LLM).
 - Muse (AI agent kiểm thử độc lập) chạy 35 trường hợp khó và soát code ngày 25/11/2026. Các lỗi tìm được (ghi trùng khi gửi cùng lúc, múi giờ, số Trung Quốc, form vỡ với ngôn ngữ lạ, secret mặc định tắt…) đã sửa trong bản này, mỗi lỗi có bài kiểm thử riêng.
 - Quét casamika.com/en/ ngày 25/11/2026: 16 link, 1 link hỏng `/en/career/` (404).
 
@@ -68,3 +68,14 @@ Nối tự động đơn Google Maps Reserve (Google chỉ mở cho đối tác 
 ## Dữ liệu khách
 
 Đơn nằm ở CSV trên VPS, Google Sheets của quán và tin nhắn gửi quản lý. Log che số điện thoại. `.env`, CSV, log hàng chờ không đưa lên Git. Khi chạy thật cần thông báo mục đích thu thập cho khách theo Nghị định 13/2023/NĐ-CP.
+
+## Đọc tin nhắn đặt bàn bằng LLM
+
+`POST /webhook/parse-message` (cần `X-Webhook-Secret`) với `{"message": "mình là Lan, 6 người 19h30 ngày 24/12, 0905123456"}`
+trả về đơn nháp JSON. Có `ANTHROPIC_API_KEY` thì dùng Claude (đọc được nhiều ngôn ngữ), không có thì dùng bộ luật dự phòng.
+Kết quả luôn qua cùng luật kiểm tra với form, chỉ là bản nháp để nhân viên xác nhận, không tự ghi đơn.
+
+## Bằng chứng
+
+- `docs/n8n-import-25-11-2026.md`: nhập 3 workflow vào n8n 2.49.5.
+- `docs/kiem-tra-casamika-25-11-2026.md`: số liệu kiểm tra casamika.com bằng curl.

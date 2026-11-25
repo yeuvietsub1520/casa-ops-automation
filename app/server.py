@@ -19,6 +19,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, urlparse
 
 from app import config, notify
+from app.llm_parse import parse_message
 from app.report import daily_report
 from app.store import BookingStore
 from app.validate import ValidationError, booking_key, normalize_booking
@@ -133,6 +134,20 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         path = urlparse(self.path).path
+        if path == "/webhook/parse-message":
+            if not SECRET:
+                return self._json(503, {"error": "máy chủ chưa đặt WEBHOOK_SECRET"})
+            if not self._authorized():
+                return self._json(401, {"error": "sai secret"})
+            try:
+                data = self._read_json()
+                if not isinstance(data, dict):
+                    raise ValidationError("cần object JSON")
+                return self._json(200, parse_message(data.get("message"), data.get("source", "other")))
+            except BadRequest as e:
+                return self._json(e.code, {"error": str(e)})
+            except ValidationError as e:
+                return self._json(422, {"error": str(e)})
         try:
             if path == "/webhook/booking":
                 if not SECRET:

@@ -272,3 +272,44 @@ class Round2Test(unittest.TestCase):
             self.assertEqual(server.Handler.client_ip(h), "10.0.0.1")
         with mock.patch.object(server.config, "TRUST_PROXY", True):
             self.assertEqual(server.Handler.client_ip(h), "9.9.9.9")  # M01
+
+
+class LlmParseTest(unittest.TestCase):
+    """Đọc tin nhắn tự do thành đơn nháp (app/llm_parse.py)."""
+
+    def test_rules_vietnamese(self):
+        from app.llm_parse import parse_message
+        with mock.patch.dict(os.environ, {"ANTHROPIC_API_KEY": ""}):
+            r = parse_message("Chào quán, mình là Lan, đặt bàn 6 người 19h30 ngày 24/12 sinh nhật, sđt 0905 123 456")
+        self.assertTrue(r["valid"], r)
+        d = r["draft"]
+        self.assertEqual((d["name"], d["phone"], d["party_size"], d["type"], r["engine"]),
+                         ("Lan", "0905123456", 6, "event", "rules"))
+        self.assertTrue(d["time"].startswith("2026-12-24T19:30"))
+
+    def test_missing_info_is_draft_not_order(self):
+        from app.llm_parse import parse_message
+        with mock.patch.dict(os.environ, {"ANTHROPIC_API_KEY": ""}):
+            r = parse_message("cho mình 1 bàn tối nay nhé")
+        self.assertFalse(r["valid"])
+        self.assertTrue(r["errors"])
+
+    def test_llm_output_still_validated(self):
+        from app import llm_parse
+        fake = {"name": "Kim", "phone": "+821012345678", "party_size": 2, "time": "2026-12-24T19:30",
+                "lang": "ko", "secret": "x", "type": "table"}
+        with mock.patch.dict(os.environ, {"ANTHROPIC_API_KEY": "k"}), \
+                mock.patch.object(llm_parse, "_call_llm", return_value=fake):
+            r = llm_parse.parse_message("안녕하세요 ...")
+        self.assertEqual(r["engine"], "llm")
+        self.assertNotIn("secret", r["draft"])
+        bad = {**fake, "time": "2026-12-24T04:00"}          # LLM trả giờ quán đóng cửa
+        with mock.patch.dict(os.environ, {"ANTHROPIC_API_KEY": "k"}), \
+                mock.patch.object(llm_parse, "_call_llm", return_value=bad):
+            self.assertFalse(llm_parse.parse_message("x")["valid"])
+
+    def test_llm_error_falls_back(self):
+        from app import llm_parse
+        with mock.patch.dict(os.environ, {"ANTHROPIC_API_KEY": "k"}), \
+                mock.patch.object(llm_parse, "_call_llm", side_effect=OSError("timeout")):
+            self.assertEqual(llm_parse.parse_message("6 người 19h30")["engine"], "rules")
