@@ -27,3 +27,14 @@ Lưu ý khi cài: n8n 2.x chặn đọc biến môi trường trong node theo m�
 ![Dữ liệu vào và phản hồi của ops-api](img/10-n8n-don-tieng-han.jpg)
 
 Trong danh sách lần chạy có một lần báo lỗi lúc 19:20:31. Lúc đó ops-api chưa bật nên n8n không gửi được đơn. Bật ops-api rồi gửi lại thì chạy thành công.
+
+## Tin báo trên Telegram của quản lý
+
+![Telegram nhận tin đơn mới và báo cáo cuối ngày](img/11-telegram-bao-don.png)
+
+- 18:08: tin kết nối thử.
+- 18:10 và 18:11: đơn Nguyen Thi Mai 14 khách, gắn nhãn TIỆC RIÊNG và ĐOÀN LỚN. Có 2 tin vì script chạy thử 2 lần, mỗi lần dùng một sổ đơn mới. Trong cùng một sổ, đơn trùng chỉ báo 1 lần (có bài test chống trùng).
+- 18:11: báo cáo ngày do workflow n8n gửi.
+- 19:20: đơn tiếng Hàn 김민지 12 khách qua n8n, đúng lần chạy trong ảnh ở trên.
+
+Số điện thoại trong ảnh là số mẫu dùng để thử.
