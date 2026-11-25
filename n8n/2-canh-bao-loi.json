@@ -26,7 +26,10 @@
         "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
         "text": "=⚠️ Workflow lỗi: {{ $json.workflow.name }}\nNode: {{ $json.execution.lastNodeExecuted }}\nLỗi: {{ $json.execution.error.message }}\nXem: {{ $json.execution.url }}",
         "additionalFields": {}
-      }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
     }
   ],
   "connections": {

@@ -1,5 +1,6 @@
 .env
 data/
 n8n-data/
-bookings.csv
+*.csv
+*.jsonl
 __pycache__/

@@ -1,0 +1,129 @@
+{
+  "name": "Casa - Nhan don tu Zalo/Facebook -> ops-api",
+  "nodes": [
+    {
+      "id": "1",
+      "name": "Webhook nhan don",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        300
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "booking",
+        "authentication": "headerAuth",
+        "responseMode": "responseNode",
+        "options": {}
+      }
+    },
+    {
+      "id": "2",
+      "name": "Chuan hoa truong",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        300
+      ],
+      "parameters": {
+        "jsCode": "\n// Chuyển tin từ Zalo/Facebook (đã được bot hoặc nhân viên điền theo mẫu) về đúng định dạng của ops-api.\n// Không tự kiểm dữ liệu ở đây: ops-api là nơi duy nhất kiểm, chống trùng và lưu đơn.\nconst b = $json.body || $json;\nreturn [{ json: {\n  name: b.name, phone: b.phone, party_size: b.party_size, time: b.time,\n  type: b.type || 'table', note: b.note || '', lang: b.lang || 'vi',\n  source: b.source || 'other'\n} }];\n"
+      }
+    },
+    {
+      "id": "3",
+      "name": "Gui ops-api",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        440,
+        300
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.OPS_API }}/webhook/booking",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Webhook-Secret",
+              "value": "={{ $env.WEBHOOK_SECRET }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true
+            }
+          }
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "id": "4",
+      "name": "Tra ket qua",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        660,
+        300
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json.body) }}",
+        "options": {
+          "responseCode": "={{ $json.statusCode }}"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook nhan don": {
+      "main": [
+        [
+          {
+            "node": "Chuan hoa truong",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Chuan hoa truong": {
+      "main": [
+        [
+          {
+            "node": "Gui ops-api",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gui ops-api": {
+      "main": [
+        [
+          {
+            "node": "Tra ket qua",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "errorWorkflow": "casa-error-alert"
+  },
+  "active": false
+}

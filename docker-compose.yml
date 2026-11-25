@@ -1,18 +1,29 @@
-# Chạy trên VPS Linux: docker compose up -d
+# Chạy trên VPS Linux: cp .env.example .env (điền giá trị) rồi docker compose up -d
+# Hai cổng chỉ mở trong máy (127.0.0.1). Đưa ra ngoài qua reverse proxy có HTTPS (Caddy hoặc Nginx):
+#   đặt-bàn.ten-mien  -> 127.0.0.1:8080   (chỉ mở /booking, /api/booking, /health)
+#   n8n.ten-mien      -> 127.0.0.1:5678   (có đăng nhập n8n)
 services:
   ops-api:
     build: .
     env_file: .env
+    environment:
+      - TZ=Asia/Ho_Chi_Minh
     volumes: [ "./data:/data" ]
-    ports: [ "8080:8080" ]
+    ports: [ "127.0.0.1:8080:8080" ]
     restart: unless-stopped
   n8n:
-    image: docker.n8n.io/n8nio/n8n:latest
+    image: docker.n8n.io/n8nio/n8n:2.49.5
     env_file: .env
     environment:
       - GENERIC_TIMEZONE=Asia/Ho_Chi_Minh
+      - TZ=Asia/Ho_Chi_Minh
       - OPS_API=http://ops-api:8080
       - N8N_BLOCK_ENV_ACCESS_IN_NODE=false
     volumes: [ "./n8n-data:/home/node/.n8n", "./n8n:/workflows:ro" ]
-    ports: [ "5678:5678" ]
+    ports: [ "127.0.0.1:5678:5678" ]
+    depends_on: [ ops-api ]
+    healthcheck:
+      test: [ "CMD-SHELL", "wget -qO- http://localhost:5678/healthz || exit 1" ]
+      interval: 30s
+      retries: 3
     restart: unless-stopped

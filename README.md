@@ -1,63 +1,70 @@
 # casa-ops-automation
 
-Hệ thống tự động hóa vận hành cho nhà hàng sân vườn: nhận đặt bàn qua webhook, kiểm tra dữ liệu JSON, ghi Google Sheet, báo Telegram hoặc Zalo OA, cảnh báo khi workflow lỗi, báo cáo đặt bàn mỗi tối, kiểm tra link hỏng trên website.
+Hệ thống đặt bàn cho nhà hàng sân vườn: form đặt bàn 7 ngôn ngữ, kiểm tra dữ liệu, chống trùng, lưu đơn, báo quản lý qua Telegram hoặc Zalo OA, báo cáo mỗi tối, cảnh báo khi workflow lỗi.
 
-Tác giả: Nguyễn Hải Bình, làm cùng Claude Code. Dựng làm bài chứng minh cho vị trí AI Engineer – Triển khai & Vận hành AI Agent.
+Tác giả: Nguyễn Hải Bình, làm cùng Claude Code. Dựng làm bài chứng minh cho vị trí AI Engineer – Triển khai & Vận hành AI Agent tại Casa Mika (Đà Nẵng). Đây là bản mẫu chạy được, chưa gắn vào hệ thống thật của quán.
 
 ## Kiến trúc
 
 ```
-Google Reserve / Facebook / Zalo / Website
-            │  (JSON qua webhook)
-            ▼
-   n8n: 1-dat-ban.json ──► Kiểm tra JSON ──► Google Sheet "DatBan"
-            │                      │               │
-            │                 422 + lý do          ├─► Telegram (tiệc ≥10 khách gắn 🎉)
-            │                                      └─► Zalo OA
-   n8n: 2-canh-bao-loi.json  ◄── mọi workflow lỗi ──► Telegram
-   n8n: 3-bao-cao-hang-ngay.json ── 22h ──► ops-api /report ──► Telegram
-
-   ops-api (Python, không thư viện ngoài): /webhook/booking · /report · /health
+Khách trên web ── form /booking ──► POST /api/booking (công khai, giới hạn 10 đơn/10 phút/IP, bẫy bot)
+Zalo / Facebook ─► n8n (webhook có header auth) ─► POST /webhook/booking (bắt buộc X-Webhook-Secret)
+                                                        │
+                        ops-api (Python, không thư viện ngoài) = nơi DUY NHẤT kiểm, chống trùng, lưu đơn
+                                                        │
+                    CSV (nguồn chính) ──► Google Sheets qua Apps Script (lỗi thì xếp hàng chờ, đẩy lại sau)
+                                                        │
+                    Telegram hoặc Zalo OA cho quản lý: 🥂 tiệc riêng, 🎉 đoàn lớn, ⚠️ khi Sheets lỗi
+n8n 22h ─► GET /report (có secret) ─► Telegram          n8n lỗi bất kỳ ─► workflow cảnh báo ─► Telegram
 ```
+
+## Quy tắc kiểm đơn
+
+| Trường | Quy tắc |
+|---|---|
+| Số điện thoại | `+84…`, `84…`, `0…` đều quy về `0…`. Nhận số quốc tế tới 15 chữ số (Trung +86, Hàn +82, Nga +7) |
+| Giờ đặt | ISO 8601, có thể kèm múi giờ. Luôn tính theo giờ Việt Nam dù máy chủ đặt ở đâu. Không nhận giờ đã qua, quá 90 ngày, ngoài giờ nhận khách |
+| Giờ nhận khách | `OPEN_HOURS`, mặc định theo casamika.com: T2–T6 07:30–24:00, T7–CN 07:30–00:30, khách cuối trước giờ đóng 30 phút |
+| Số khách | Số nguyên 1–300. Không nhận `12.9`, `true` |
+| Chống trùng | Cùng số điện thoại + cùng giờ = một đơn, kể cả 30 đơn gửi cùng lúc |
 
 ## Thành phần
 
-| Thư mục | Nội dung |
+| File | Nội dung |
 |---|---|
-| `app/validate.py` | Kiểm tra, chuẩn hóa đơn (sđt +84, giờ ISO 8601, số khách), khóa chống trùng |
-| `app/store.py` | Ghi CSV, tùy chọn đẩy Google Sheets qua Apps Script webhook |
-| `app/notify.py` | Gửi Telegram Bot API hoặc Zalo OA API, thử lại 3 lần |
-| `app/server.py` | Webhook HTTP, secret header, log JSON, báo lỗi về quản lý khi ghi thất bại |
-| `app/report.py` | Báo cáo theo ngày: số đơn, số khách, theo nguồn, tiệc lớn |
-| `tools/check_links.py` | Quét link hỏng trên website (đặt lịch chạy hằng ngày) |
-| `n8n/` | 3 workflow import được vào n8n |
-| `tests/` | Kiểm thử đơn vị và tích hợp |
+| `app/validate.py` | Kiểm và chuẩn hóa đơn, giờ mở cửa, múi giờ |
+| `app/store.py` | Kiểm trùng và ghi CSV trong cùng một khóa, đẩy Sheets kèm hàng chờ |
+| `app/notify.py` | Telegram, Zalo OA, thử lại 3 lần, gửi nền, che số điện thoại trong log |
+| `app/server.py` | Các đường dẫn, secret so sánh an toàn, giới hạn tần suất, giới hạn 16 KB mỗi đơn |
+| `app/report.py` | Báo cáo ngày: khách đến, đơn mới nhận, tiệc riêng, đoàn lớn |
+| `app/static/booking.html` | Form 7 ngôn ngữ (vi, en, ko, zh, ru, de, th) |
+| `n8n/` | 3 workflow: nhận đơn từ kênh khác, cảnh báo lỗi, báo cáo 22h |
+| `tools/check_links.py` | Quét link hỏng trên một trang |
+| `tests/` | 22 bài kiểm thử |
 
 ## Chạy thử trên máy
 
 ```bash
 python3 -m unittest discover -s tests -v
-NOTIFY_CHANNEL=log python3 -m app.server
-curl -X POST localhost:8080/webhook/booking -H 'Content-Type: application/json' \
-  -d '{"name":"Anna","phone":"+84905123456","party_size":12,"time":"2026-12-24T19:30","source":"google"}'
-curl localhost:8080/report
-python3 tools/check_links.py https://example.com/
+WEBHOOK_SECRET=thu-nghiem NOTIFY_CHANNEL=log python3 -m app.server
+# mở http://localhost:8080/booking?lang=ko
+curl -H 'X-Webhook-Secret: thu-nghiem' localhost:8080/report
 ```
 
-## Triển khai VPS (Linux)
+## Triển khai VPS
 
-```bash
-cp .env.example .env    # điền token Telegram / Zalo, SHEET_ID
-docker compose up -d    # ops-api :8080, n8n :5678
-docker compose exec n8n n8n import:workflow --separate --input=/workflows
-```
+Xem [docs/HUONG-DAN.md](docs/HUONG-DAN.md). Tóm tắt: `cp .env.example .env`, điền giá trị, `docker compose up -d`, đặt reverse proxy HTTPS, import 3 workflow, tạo credential Telegram và Header Auth trong n8n.
 
-## Kết quả đo thật
+## Kết quả kiểm thật
 
-- 7/7 bài kiểm thử đạt (chuẩn hóa, thiếu trường, giờ sai, giờ đã qua, thử lại khi mạng lỗi, luồng webhook 201/duplicate/422, form đặt bàn, báo cáo).
-- Form đặt bàn 5 ngôn ngữ tại `/booking`, có loại tiệc riêng. Hướng dẫn đầy đủ kèm ảnh: [docs/HUONG-DAN.md](docs/HUONG-DAN.md).
-- Quét casamika.com/en/ ngày 25/11/2026: 16 link, phát hiện 1 link hỏng `/en/career/` trả 404.
+- 21/22 bài kiểm thử đạt.
+- Muse (AI agent kiểm thử độc lập) chạy 35 trường hợp khó và soát code ngày 25/11/2026. Các lỗi tìm được (ghi trùng khi gửi cùng lúc, múi giờ, số Trung Quốc, form vỡ với ngôn ngữ lạ, secret mặc định tắt…) đã sửa trong bản này, mỗi lỗi có bài kiểm thử riêng.
+- Quét casamika.com/en/ ngày 25/11/2026: 16 link, 1 link hỏng `/en/career/` (404).
 
-## Bảo mật
+## Chưa làm (cần thông tin của quán)
 
-Không lưu token trong code (`.env` bị bỏ qua khỏi Git). Webhook có thể bật `WEBHOOK_SECRET`. Dữ liệu khách chỉ ghi vào Sheet của nhà hàng.
+Nối tự động đơn Google Maps Reserve (Google chỉ mở cho đối tác đặt bàn), sơ đồ bàn và sức chứa từng khu, nhắn xác nhận cho khách qua Zalo OA hoặc ZNS, nối POS, đặt cọc tiệc.
+
+## Dữ liệu khách
+
+Đơn nằm ở CSV trên VPS, Google Sheets của quán và tin nhắn gửi quản lý. Log che số điện thoại. `.env`, CSV, log hàng chờ không đưa lên Git. Khi chạy thật cần thông báo mục đích thu thập cho khách theo Nghị định 13/2023/NĐ-CP.

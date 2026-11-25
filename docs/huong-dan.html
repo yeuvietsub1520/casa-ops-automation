@@ -1,54 +1,60 @@
-<html><head><meta charset="utf-8"><style>body{font-family:Arial;font-size:10.5pt;line-height:1.45;color:#222;margin:14mm}h1{color:#3f5a3c;font-size:18pt}h2{color:#3f5a3c;border-bottom:2px solid #3f5a3c;padding-bottom:2px;margin-top:18px}h3{color:#444}img{max-width:100%;border:1px solid #ddd;border-radius:6px;margin:4px 0}table{border-collapse:collapse;width:100%;font-size:9.5pt;margin:6px 0}td,th{border:1px solid #ccc;padding:5px;vertical-align:top}th{background:#eef3ec}td img{max-width:100%}pre{background:#1e1f22;color:#d7f5d0;padding:10px;border-radius:6px;font-size:9pt;white-space:pre-wrap}code{background:#f2f2f2;padding:0 3px}.li{margin:2px 0 2px 10px}h2{page-break-after:avoid}img{page-break-inside:avoid}</style></head><body><h1>Hướng dẫn casa-ops-automation cho Casa Mika</h1>
-<p>Tài liệu giải thích hệ thống làm gì, đã kiểm thử ra sao, khớp với cách Casa Mika vận hành tới đâu, và cách chạy từng bước.</p>
+<html><head><meta charset="utf-8"><style>body{font-family:Arial;font-size:10.3pt;line-height:1.45;color:#222;margin:13mm}h1{color:#3f5a3c;font-size:18pt}h2{color:#3f5a3c;border-bottom:2px solid #3f5a3c;padding-bottom:2px;margin-top:16px;page-break-after:avoid}h3{color:#444;page-break-after:avoid}img{max-width:100%;border:1px solid #ddd;border-radius:6px;margin:4px 0;page-break-inside:avoid}table{border-collapse:collapse;width:100%;font-size:9pt;margin:6px 0}td,th{border:1px solid #ccc;padding:4px 5px;vertical-align:top}th{background:#eef3ec}tr{page-break-inside:avoid}pre{background:#1e1f22;color:#d7f5d0;padding:10px;border-radius:6px;font-size:8.8pt;white-space:pre-wrap;page-break-inside:avoid}code{background:#f2f2f2;padding:0 3px;font-size:8.8pt}.li{margin:2px 0 2px 10px}img[alt^="Kiểm thử"]{max-width:70%}</style></head><body><h1>Hướng dẫn casa-ops-automation cho Casa Mika</h1>
+<p>Tài liệu giải thích hệ thống làm gì, đã kiểm thử ra sao, khớp với cách Casa Mika vận hành tới đâu, và cách chạy từng bước. Bản cập nhật 25/11/2026, sau khi Muse kiểm thử độc lập và các lỗi tìm được đã sửa.</p>
 <h2>1. Hệ thống giải quyết việc gì của Casa Mika</h2>
-<p>Casa Mika nhận khách qua nhiều đường: nút Reserve dẫn sang Google Maps, điện thoại, Zalo, Facebook, khách đặt tiệc riêng và tiệc cưới. Quán mở từ sáng tới khuya, nhiều ca, khách nói nhiều thứ tiếng (website có 7 ngôn ngữ). Khi đơn nằm rải rác ở nhiều nơi, dễ sót đơn, quản lý không biết tối nay có bao nhiêu khách, tiệc lớn không được chuẩn bị trước.</p>
-<p>Hệ thống gom mọi đơn về một Google Sheet, báo ngay cho quản lý qua Telegram hoặc Zalo, đánh dấu tiệc riêng và đoàn lớn, gửi báo cáo lúc 22h, và tự báo khi có lỗi.</p>
+<p>Casa Mika nhận khách qua nhiều đường: nút Reserve dẫn sang Google Maps, điện thoại, Zalo, Facebook, khách đặt tiệc riêng và tiệc cưới. Quán mở từ 7:30 tới khuya, nhiều ca, khách nói nhiều thứ tiếng (website có 7 ngôn ngữ). Đơn nằm rải rác thì dễ sót, quản lý không biết tối nay bao nhiêu khách, tiệc lớn không được chuẩn bị trước.</p>
+<p>Hệ thống có một nơi duy nhất kiểm và lưu đơn (ops-api). Form trên web và các kênh khác đều đổ về đây. Quản lý nhận tin ngay, tiệc riêng và đoàn lớn được đánh dấu, 22h có báo cáo, workflow lỗi thì báo về.</p>
 <p><img src="img/0-kien-truc.png" alt="Kiến trúc"></p>
 <h2>2. Đã kiểm thử những gì</h2>
-<h3>2.1 Kiểm thử tự động: 7/7 đạt</h3>
-<p>Kiểm: chuẩn hóa số điện thoại +84, thiếu trường, giờ sai định dạng, giờ đã qua, gửi thông báo thử lại 3 lần khi mạng lỗi, luồng webhook đầy đủ, báo cáo ngày.</p>
+<h3>2.1 Kiểm thử tự động: 22/22 đạt</h3>
 <p><img src="img/3-kiem-thu.png" alt="Kiểm thử"></p>
 <h3>2.2 Chạy thử với tình huống của Casa Mika</h3>
-<p class="li">- Khách Hàn đặt bàn 2 người lúc 19:30, ghi chú &quot;bàn gần piano&quot; → nhận đơn.</p>
-<p class="li">- Khách Nga đặt tiệc sinh nhật 25 người qua Zalo → nhận đơn, gắn nhãn tiệc riêng và đoàn lớn.</p>
-<p class="li">- Gửi lại đơn của khách Hàn → hệ thống nhận ra trùng, không ghi hai lần.</p>
-<p class="li">- Số điện thoại &quot;abc&quot; → bị từ chối, báo rõ lý do.</p>
-<p><img src="img/4-webhook.png" alt="Webhook"></p>
-<h3>2.3 Tin báo quản lý và báo cáo cuối ngày</h3>
+<p><img src="img/4-webhook.png" alt="Tình huống"></p>
+<h3>2.3 Tin báo quản lý và báo cáo ngày</h3>
+<p>Trong log, số điện thoại được che. Tin gửi Telegram hoặc Zalo cho quản lý có số đầy đủ để gọi lại khách.</p>
 <p><img src="img/5-bao-tin-bao-cao.png" alt="Báo tin và báo cáo"></p>
-<h3>2.4 Quét link hỏng trên casamika.com (chạy thật ngày 25/11/2026)</h3>
+<h3>2.4 Kiểm thử độc lập của Muse</h3>
+<p>Muse (AI agent kiểm thử) đã tải kho về máy khác, chạy 35 trường hợp khó và soát toàn bộ code. Các lỗi tìm được và đã sửa:</p>
+<table><tr><th>Lỗi Muse tìm được</th><th>Đã sửa thế nào</th><th>Bài kiểm thử</th></tr><tr><td>20 đơn giống nhau gửi cùng lúc ghi trùng 2 dòng</td><td>Kiểm trùng và ghi trong cùng một khóa</td><td><code>test_concurrent_duplicates_write_once</code></td></tr><tr><td>Gửi đồng thời bị rớt kết nối</td><td>Tăng hàng chờ kết nối lên 128</td><td><code>test_50_parallel_requests_all_answered</code></td></tr><tr><td>Máy chủ ở nước ngoài thì kiểm &quot;giờ đã qua&quot; sai</td><td>Mọi phép tính giờ theo giờ Việt Nam +07:00</td><td><code>test_timezone_aware</code></td></tr><tr><td>Giờ kèm múi giờ làm sập yêu cầu</td><td>Đổi về giờ Việt Nam trước khi kiểm</td><td><code>test_timezone_aware</code></td></tr><tr><td>Số Trung Quốc +86 bị từ chối</td><td>Nhận tới 15 chữ số theo chuẩn quốc tế</td><td><code>test_phone_formats</code></td></tr><tr><td><code>84905…</code> và <code>+84905…</code> thành 2 đơn</td><td>Cùng quy về <code>0905…</code></td><td><code>test_phone_formats</code></td></tr><tr><td>Nhận đặt bàn lúc 3h sáng, năm 2099</td><td>Kiểm giờ nhận khách, tối đa 90 ngày</td><td><code>test_opening_hours</code>, <code>test_time_rules</code></td></tr><tr><td><code>12.9</code> khách thành 12, <code>true</code> thành 1</td><td>Chỉ nhận số nguyên</td><td><code>test_party_size_types</code></td></tr><tr><td>Form vỡ khi <code>?lang=de</code></td><td>Thêm tiếng Đức, Thái; ngôn ngữ lạ quay về tiếng Việt</td><td><code>test_form_has_7_languages</code></td></tr><tr><td>Google Sheets lỗi thì báo khách thất bại dù đơn đã lưu</td><td>Đơn vẫn nhận, Sheets xếp hàng chờ đẩy lại, báo quản lý</td><td><code>test_sheets_failure_keeps_booking_and_queues</code></td></tr><tr><td>Secret mặc định tắt, so sánh không an toàn</td><td>Webhook và báo cáo bắt buộc secret, so sánh bằng <code>hmac.compare_digest</code></td><td><code>test_webhook_requires_secret</code></td></tr><tr><td>Không chống spam</td><td>Form giới hạn 10 đơn/10 phút/IP, có ô ẩn bẫy bot</td><td><code>test_limit</code>, <code>test_honeypot</code></td></tr><tr><td><code>/report</code> lộ tên khách</td><td>Bắt buộc secret</td><td><code>test_report_and_health</code></td></tr><tr><td>Số điện thoại khách nằm trong log</td><td>Che số trong log</td><td><code>test_mask_phone_in_log</code></td></tr><tr><td>Body lớn, sai Content-Type, Content-Length rác làm treo</td><td>Trả 413, 415, 400 rõ ràng</td><td><code>test_bad_requests_get_answers</code></td></tr><tr><td>File CSV hỏng làm server không chạy</td><td>Bỏ qua dữ liệu hỏng, ghi cảnh báo</td><td><code>test_bad_csv_does_not_crash</code></td></tr><tr><td>n8n tự kiểm riêng, khác ops-api</td><td>n8n chỉ chuyển đơn sang ops-api, ops-api là nơi duy nhất kiểm</td><td>3 workflow đã import vào n8n 2.49.5</td></tr><tr><td>Cổng n8n lộ ra ngoài</td><td>Chỉ mở trong máy, đi qua reverse proxy HTTPS; webhook n8n có header auth</td><td><code>docker-compose.yml</code></td></tr><tr><td>README nói quá 7 chỗ</td><td>Viết lại đúng với code, thêm mục &quot;Chưa làm&quot;</td><td><code>README.md</code></td></tr></table>
+<h3>2.5 Quét link hỏng trên casamika.com (chạy thật)</h3>
 <p><img src="img/6-kiem-link.png" alt="Kiểm link"></p>
-<h2>3. Form đặt bàn ngay trên website, 5 ngôn ngữ</h2>
-<p>Hiện nút Reserve đưa khách rời website sang Google Maps, quán không giữ được dữ liệu khách. Form này đặt ngay trên casamika.com, có tiếng Việt, Anh, Hàn, Trung, Nga, có lựa chọn &quot;Tiệc riêng / sự kiện&quot;. Đơn đi thẳng vào hệ thống ở trên.</p>
-<table><tr><th>Tiếng Việt</th><th>Tiếng Hàn</th></tr><tr><td><img src="img/1-form-vi.png" alt="Form VI"></td><td><img src="img/2-form-ko.png" alt="Form KO"></td></tr></table>
-<h2>4. Khớp với mô hình Casa Mika tới đâu (đánh giá thật)</h2>
-<table><tr><th>Nhu cầu của Casa Mika</th><th>Hệ thống hiện tại</th><th>Mức khớp</th></tr><tr><td>Gom đơn từ web, Zalo, Facebook về một chỗ</td><td>Có: webhook + n8n + Google Sheet</td><td>Khớp</td></tr><tr><td>Tiệc riêng, tiệc cưới, đoàn lớn</td><td>Có: trường <code>type</code>, nhãn 🥂 và 🎉, ngưỡng đoàn lớn chỉnh được</td><td>Khớp</td></tr><tr><td>Khách nhiều quốc tịch</td><td>Form 5 ngôn ngữ, lưu ngôn ngữ khách để nhân viên chuẩn bị</td><td>Khớp một phần (web có 7 ngôn ngữ, form chưa có Đức, Thái)</td></tr><tr><td>Báo quản lý qua Zalo hoặc Telegram</td><td>Có cả hai, chọn bằng một biến</td><td>Khớp</td></tr><tr><td>Đơn từ Google Maps Reserve</td><td>Chưa nối tự động. Google chỉ mở cho đối tác đặt bàn chính thức. Tạm thời lễ tân nhập vào Sheet, hoặc thay nút Reserve bằng form của quán</td><td>Chưa khớp</td></tr><tr><td>Đơn qua điện thoại</td><td>Lễ tân nhập Sheet hoặc dùng form</td><td>Khớp một phần</td></tr><tr><td>Quản lý số bàn, sức chứa từng khu (vườn, nhà kính)</td><td>Chưa có</td><td>Chưa khớp, làm ở tháng 2</td></tr><tr><td>Nhắn xác nhận tự động cho khách</td><td>Chưa có. Zalo OA chỉ nhắn được khách đã quan tâm OA hoặc qua ZNS có mẫu được duyệt</td><td>Chưa khớp, cần OA của quán</td></tr><tr><td>Nối với POS đang dùng</td><td>Chưa biết quán dùng POS nào</td><td>Cần hỏi khi phỏng vấn</td></tr></table>
-<p><b>Kết luận:</b> phần lõi (nhận đơn, kiểm dữ liệu, gom về Sheet, báo quản lý, báo cáo, cảnh báo lỗi) đã chạy và khớp. Ba phần cần thông tin nội bộ mới làm tiếp được: Google Reserve, sơ đồ bàn, Zalo OA và POS.</p>
+<h2>3. Form đặt bàn 7 ngôn ngữ</h2>
+<p>Giống 7 ngôn ngữ trên casamika.com: Việt, Anh, Hàn, Trung, Nga, Đức, Thái. Có lựa chọn &quot;Tiệc riêng / sự kiện&quot;, chặn chọn ngày đã qua, gửi lỗi thì hiện số điện thoại quán để khách gọi.</p>
+<table><tr><th>Tiếng Việt</th><th>Tiếng Hàn</th><th>Tiếng Đức</th></tr><tr><td><img src="img/1-form-vi.png" alt="Form VI"></td><td><img src="img/2-form-ko.png" alt="Form KO"></td><td><img src="img/2b-form-de.png" alt="Form DE"></td></tr></table>
+<h2>4. Khớp với mô hình Casa Mika tới đâu</h2>
+<table><tr><th>Nhu cầu của Casa Mika</th><th>Hiện tại</th><th>Mức khớp</th></tr><tr><td>Đơn từ web về một chỗ</td><td>Form <code>/booking</code> → ops-api → CSV và Google Sheet</td><td>Khớp</td></tr><tr><td>Đơn từ Zalo, Facebook</td><td>n8n nhận rồi chuyển ops-api. Cần bot hoặc nhân viên điền theo mẫu, chưa tự đọc tin nhắn tự do</td><td>Khớp một phần</td></tr><tr><td>Tiệc riêng, tiệc cưới, đoàn lớn</td><td>Nhãn 🥂 và 🎉, ngưỡng chỉnh được</td><td>Khớp</td></tr><tr><td>Giờ mở cửa</td><td>Theo web: T2–T6 07:30–24:00, T7–CN 07:30–00:30. Thông tin khác ghi 8h–24h, cuối tuần tới 1h</td><td>Cần quán chốt giờ thật</td></tr><tr><td>Khách nhiều quốc tịch</td><td>Form 7 ngôn ngữ, nhận số quốc tế, lưu ngôn ngữ khách</td><td>Khớp</td></tr><tr><td>Báo quản lý</td><td>Telegram hoặc Zalo OA, chọn bằng <code>NOTIFY_CHANNEL</code></td><td>Khớp</td></tr><tr><td>Đơn Google Maps Reserve</td><td>Chưa nối được: Google chỉ mở cho đối tác đặt bàn chính thức</td><td>Chưa khớp</td></tr><tr><td>Sơ đồ bàn, sức chứa vườn và nhà kính</td><td>Chưa có</td><td>Cần sơ đồ của quán</td></tr><tr><td>Nhắn xác nhận cho khách</td><td>Chưa có, cần Zalo OA hoặc ZNS có mẫu được duyệt</td><td>Cần OA của quán</td></tr><tr><td>POS, đặt cọc tiệc</td><td>Chưa có</td><td>Cần hỏi khi phỏng vấn</td></tr></table>
 <h2>5. Cách chạy từng bước</h2>
 <h3>Bước 1: Chạy thử trên máy (5 phút)</h3>
 <pre>
 git clone https://github.com/yeuvietsub1520/casa-ops-automation
 cd casa-ops-automation
-python3 -m unittest discover -s tests -v     # 7 bài phải OK
-NOTIFY_CHANNEL=log python3 -m app.server     # mở http://localhost:8080/booking
+python3 -m unittest discover -s tests -v
+WEBHOOK_SECRET=thu-nghiem NOTIFY_CHANNEL=log python3 -m app.server
 </pre>
-<p>Điền form, bấm Gửi. Cửa sổ terminal hiện dòng <code>NOTIFY: Đặt bàn mới…</code>.</p>
+<p>Mở <code>http://localhost:8080/booking</code>, điền form, bấm Gửi. Terminal hiện dòng <code>NOTIFY: Đặt bàn mới…</code>.</p>
 <h3>Bước 2: Nối Telegram (10 phút)</h3>
-<p class="li">1. Trong Telegram, nhắn @BotFather lệnh <code>/newbot</code>, đặt tên, nhận token.</p>
+<p class="li">1. Trong Telegram nhắn @BotFather lệnh <code>/newbot</code>, đặt tên, nhận token.</p>
 <p class="li">2. Thêm bot vào nhóm quản lý, lấy chat id.</p>
-<p class="li">3. Tạo file <code>.env</code> từ <code>.env.example</code>, điền <code>NOTIFY_CHANNEL=telegram</code>, <code>TELEGRAM_BOT_TOKEN</code>, <code>TELEGRAM_CHAT_ID</code>.</p>
-<p class="li">4. Chạy lại server, gửi một đơn thử, tin nhắn hiện trong nhóm.</p>
+<p class="li">3. <code>cp .env.example .env</code>, điền <code>WEBHOOK_SECRET</code> (tạo bằng <code>openssl rand -hex 24</code>), <code>NOTIFY_CHANNEL=telegram</code>, <code>TELEGRAM_BOT_TOKEN</code>, <code>TELEGRAM_CHAT_ID</code>.</p>
 <h3>Bước 3: Nối Zalo OA (cần OA của quán)</h3>
-<p>Điền <code>NOTIFY_CHANNEL=zalo</code>, <code>ZALO_OA_TOKEN</code>, <code>ZALO_USER_ID</code> (người nhận phải là người đã quan tâm OA).</p>
-<h3>Bước 4: Google Sheet</h3>
-<p>Tạo Sheet có trang &quot;DatBan&quot;. Trong n8n tạo kết nối Google Sheets, điền <code>SHEET_ID</code> vào <code>.env</code>.</p>
+<p><code>NOTIFY_CHANNEL=zalo</code>, <code>ZALO_OA_TOKEN</code>, <code>ZALO_USER_ID</code>. Người nhận phải đã quan tâm OA.</p>
+<h3>Bước 4: Google Sheet qua Apps Script</h3>
+<p>Tạo Sheet có trang &quot;DatBan&quot;, vào Tiện ích mở rộng → Apps Script, dán đoạn dưới, triển khai dạng Ứng dụng web, chép URL vào <code>SHEETS_WEBHOOK_URL</code>, đặt cùng chuỗi bí mật vào <code>SHEETS_SECRET</code>.</p>
+<pre>
+function doPost(e) {
+  const d = JSON.parse(e.postData.contents);
+  if (d.secret !== PropertiesService.getScriptProperties().getProperty(&#x27;SECRET&#x27;)) return ContentService.createTextOutput(&#x27;denied&#x27;);
+  SpreadsheetApp.getActive().getSheetByName(&#x27;DatBan&#x27;).appendRow(
+    [d.received_at, d.type, d.name, d.phone, d.party_size, d.time, d.source, d.note, d.lang]);
+  return ContentService.createTextOutput(&#x27;ok&#x27;);
+}
+</pre>
 <h3>Bước 5: Đưa lên VPS Linux</h3>
 <pre>
 docker compose up -d
 docker compose exec n8n n8n import:workflow --separate --input=/workflows
 </pre>
-<p>Mở n8n ở cổng 5678, bật 3 workflow: đặt bàn, cảnh báo lỗi, báo cáo 22h.</p>
+<p>Đặt reverse proxy HTTPS (Caddy hoặc Nginx) cho cổng 8080 và 5678. Trong n8n tạo credential Telegram và Header Auth, gán vào node, bật 3 workflow.</p>
 <h3>Bước 6: Đặt form lên casamika.com</h3>
-<p>Thêm trang /reserve hoặc đổi nút Reserve trỏ tới form. Bật <code>WEBHOOK_SECRET</code> khi đi thật.</p>
+<p>Thêm trang /reserve trỏ tới form, hoặc đổi nút Reserve. Chốt giờ mở cửa thật vào <code>OPEN_HOURS</code>.</p>
 <h2>6. Khi phỏng vấn, giải thích trong 1 phút</h2>
-<p>&quot;Khách đặt qua web, Zalo hay Facebook đều đi vào một webhook. Hệ thống kiểm tra số điện thoại, giờ, số khách, chống trùng, rồi ghi vào Google Sheet. Quản lý nhận tin ngay trên Telegram hoặc Zalo, tiệc riêng và đoàn lớn được đánh dấu. 22h có báo cáo trong ngày. Workflow nào lỗi thì báo về ngay. Phần Google Reserve, sơ đồ bàn và POS em cần xem hệ thống nội bộ của quán để nối tiếp.&quot;</p></body></html>
+<p>&quot;Khách đặt trên web, hoặc qua Zalo, Facebook rồi n8n chuyển vào, đều về một máy chủ Python. Máy chủ kiểm số điện thoại kể cả số nước ngoài, giờ theo giờ Việt Nam và giờ mở cửa, chống trùng kể cả khi nhiều đơn gửi cùng lúc, rồi lưu và đẩy sang Google Sheet. Sheet lỗi thì đơn vẫn giữ và đẩy lại sau. Quản lý nhận tin ngay trên Telegram hoặc Zalo, tiệc riêng và đoàn lớn được đánh dấu, 22h có báo cáo. Em đã nhờ một AI agent khác kiểm thử độc lập, sửa hết lỗi nó tìm ra, mỗi lỗi có bài kiểm thử riêng. Phần Google Reserve, sơ đồ bàn và POS em cần xem hệ thống của quán để nối tiếp.&quot;</p></body></html>

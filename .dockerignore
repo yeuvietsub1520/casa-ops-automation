@@ -1,0 +1,9 @@
+.git
+.env
+data/
+n8n-data/
+__pycache__/
+tests/
+docs/
+*.csv
+*.jsonl

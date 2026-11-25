@@ -1,26 +1,40 @@
-"""Báo cáo đặt bàn theo ngày: tổng đơn, tổng khách, theo nguồn, tiệc lớn.
+"""Báo cáo theo ngày: khách đến trong ngày (theo giờ đặt) và số đơn mới nhận trong ngày.
 
-Chạy tay: python -m app.report 2026-12-24   (gửi qua kênh NOTIFY_CHANNEL)
+Chạy tay: python -m app.report 2026-12-24
 """
+import logging
 import os
 import sys
 from collections import Counter
-from datetime import date
+from datetime import datetime
 
-from app import notify
+from app import config, notify
+
+log = logging.getLogger("report")
 
 
-def daily_report(rows, day: str = None, large: int = 10) -> str:
-    day = day or date.today().isoformat()
-    today = [r for r in rows if r["time"].startswith(day)]
-    guests = sum(int(r["party_size"]) for r in today)
-    by_src = Counter(r["source"] for r in today)
-    big = [r for r in today if int(r["party_size"]) >= large]
-    lines = [f"📊 Đặt bàn {day}: {len(today)} đơn, {guests} khách"]
+def daily_report(rows, day: str = None, large: int = None) -> str:
+    day = day or datetime.now(config.VN_TZ).date().isoformat()
+    large = large or config.LARGE_PARTY
+    coming, received = [], 0
+    for r in rows:
+        try:
+            size = int(r["party_size"])
+            if r["time"].startswith(day):
+                coming.append({**r, "party_size": size})
+            if str(r.get("received_at", "")).startswith(day):
+                received += 1
+        except (KeyError, ValueError, TypeError, AttributeError):
+            log.warning("bỏ qua dòng hỏng: %s", r)
+    guests = sum(r["party_size"] for r in coming)
+    by_src = Counter(r.get("source", "other") for r in coming)
+    lines = [f"📊 Ngày {day}: {len(coming)} bàn, {guests} khách đến · {received} đơn mới nhận trong ngày"]
     if by_src:
         lines.append("Nguồn: " + ", ".join(f"{k} {v}" for k, v in by_src.most_common()))
-    for r in big:
-        lines.append(f"🎉 Tiệc lớn: {r['name']} {r['party_size']} khách lúc {r['time'][11:]}")
+    for r in coming:
+        if r.get("type") == "event" or r["party_size"] >= large:
+            tag = "🥂 Tiệc riêng" if r.get("type") == "event" else "🎉 Đoàn lớn"
+            lines.append(f"{tag}: {r['name']} {r['party_size']} khách lúc {r['time'][11:16]}")
     return "\n".join(lines)
 
 

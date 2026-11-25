@@ -1,7 +1,8 @@
 """Kiểm tra link hỏng trên một website (chỉ đọc, GET công khai).
 
 Chạy: python tools/check_links.py https://www.casamika.com/en/
-In ra mọi link nội bộ trả về lỗi 4xx/5xx. Có thể đặt lịch chạy hằng ngày và báo về Telegram/Zalo.
+Chỉ quét các thẻ <a> trên đúng trang được đưa vào (không đi sâu), in ra link nội bộ lỗi 4xx/5xx.
+Muốn chạy hằng ngày thì đặt cron trên VPS, ví dụ: 0 7 * * * python tools/check_links.py https://... 
 """
 import sys
 import urllib.error
@@ -51,7 +52,12 @@ def check(start: str):
 
 
 if __name__ == "__main__":
-    total, broken = check(sys.argv[1])
+    if len(sys.argv) != 2:
+        sys.exit("Cách dùng: python tools/check_links.py <url>")
+    try:
+        total, broken = check(sys.argv[1])
+    except Exception as e:
+        sys.exit(f"Không mở được trang gốc: {e}")
     print(f"Đã kiểm {total} link, hỏng {len(broken)}")
     for code, url in broken:
         print(code, url)
