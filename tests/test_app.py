@@ -224,3 +224,51 @@ class ReportTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class Round2Test(unittest.TestCase):
+    """Các lỗi Muse tìm ra ở vòng kiểm thử 2 (M01, M02, M03, M04, M06, M08, M18)."""
+
+    def test_pending_survives_and_retries(self):
+        d = tempfile.mkdtemp()
+        s = BookingStore(os.path.join(d, "x.csv"), "http://127.0.0.1:9/", "s")
+        b = normalize_booking(GOOD)
+        s.add_if_new(b, "k1")
+        self.assertEqual(len(s._read_pending()), 1)          # M02: lỗi thì vẫn còn trong hàng chờ
+        with mock.patch.object(s, "_send_one", return_value=True):
+            self.assertEqual(s.retry_pending(), 0)            # M06: đẩy lại không cần đơn mới
+        self.assertFalse(os.path.exists(s.pending))
+
+    def test_corrupt_pending_line(self):
+        d = tempfile.mkdtemp()
+        s = BookingStore(os.path.join(d, "x.csv"), "http://127.0.0.1:9/", "s")
+        with open(s.pending, "w") as f:
+            f.write('{"a":1}\n{hỏng\n')
+        self.assertEqual(s._read_pending(), [{"a": 1}])      # M03: dòng hỏng không làm sập
+        self.assertTrue(os.path.exists(s.pending + ".bad"))
+
+    def test_failed_notify_is_masked(self):
+        d = tempfile.mkdtemp()
+        path = os.path.join(d, "nf.jsonl")
+        with mock.patch.object(notify, "send", side_effect=RuntimeError("down")):
+            t = notify.send_async("khách 0905123456", failed_path=path)
+            if t:
+                t.join(5)
+        self.assertNotIn("0905123456", open(path).read())   # M04
+
+    def test_bad_open_hours_fallback(self):
+        with self.assertRaises(ValueError):
+            validate._parse_hours("sai")
+        self.assertTrue(validate.HOURS)                       # M08: module vẫn chạy với giờ mặc định
+
+    def test_phone_limit(self):
+        with mock.patch.object(server.config, "RATE_LIMIT_PHONE", 2):
+            r = [server.phone_limited("0900000001") for _ in range(3)]
+        self.assertEqual(r, [False, False, True])            # M18
+
+    def test_forwarded_for_only_when_trusted(self):
+        h = mock.Mock(headers={"X-Forwarded-For": "1.2.3.4, 9.9.9.9"}, client_address=("10.0.0.1", 1))
+        with mock.patch.object(server.config, "TRUST_PROXY", False):
+            self.assertEqual(server.Handler.client_ip(h), "10.0.0.1")
+        with mock.patch.object(server.config, "TRUST_PROXY", True):
+            self.assertEqual(server.Handler.client_ip(h), "9.9.9.9")  # M01

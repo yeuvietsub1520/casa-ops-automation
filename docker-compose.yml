@@ -5,7 +5,9 @@
 services:
   ops-api:
     build: .
-    env_file: .env
+    env_file:
+      - path: .env
+        required: false
     environment:
       - TZ=Asia/Ho_Chi_Minh
     volumes: [ "./data:/data" ]
@@ -13,7 +15,9 @@ services:
     restart: unless-stopped
   n8n:
     image: docker.n8n.io/n8nio/n8n:2.49.5
-    env_file: .env
+    env_file:
+      - path: .env
+        required: false
     environment:
       - GENERIC_TIMEZONE=Asia/Ho_Chi_Minh
       - TZ=Asia/Ho_Chi_Minh

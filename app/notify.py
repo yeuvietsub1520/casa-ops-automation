@@ -46,15 +46,20 @@ def send(text: str) -> str:
     return channel
 
 
-def send_async(text: str, failed_path: str = "notify_failed.jsonl"):
-    """Gửi nền. Lỗi sau 3 lần thì ghi vào file để quản lý kiểm tra, không mất tin im lặng."""
+def send_async(text: str, failed_path: str = None):
+    """Gửi nền. Lỗi sau 3 lần thì ghi vào notify_failed.jsonl cạnh file đơn (số điện thoại đã che;
+    số đầy đủ nằm trong CSV), không mất tin im lặng."""
+    if failed_path is None:
+        from app.config import DATA_DIR
+        failed_path = os.path.join(DATA_DIR, "notify_failed.jsonl")
+
     def run():
         try:
             send(text)
         except Exception as e:
             log.error("báo tin thất bại: %s", e)
             with open(failed_path, "a", encoding="utf-8") as f:
-                f.write(json.dumps({"t": time.time(), "text": text, "error": str(e)}, ensure_ascii=False) + "\n")
+                f.write(json.dumps({"t": time.time(), "text": mask_phone(text), "error": str(e)}, ensure_ascii=False) + "\n")
     t = threading.Thread(target=run, daemon=True)
     t.start()
     return t

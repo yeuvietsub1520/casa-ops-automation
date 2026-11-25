@@ -12,6 +12,7 @@ import hmac
 import json
 import logging
 import os
+import threading
 import time
 from collections import defaultdict, deque
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -33,16 +34,38 @@ with open(os.path.join(os.path.dirname(__file__), "static", "booking.html"), "rb
     FORM_HTML = _f.read()
 
 _hits = defaultdict(deque)
+_hits_lock = threading.Lock()
+
+
+def _over(key: str, limit: int, window: int) -> bool:
+    with _hits_lock:
+        now, q = time.time(), _hits[key]
+        while q and q[0] < now - window:
+            q.popleft()
+        if len(q) >= limit:
+            return True
+        q.append(now)
+        return False
 
 
 def rate_limited(ip: str) -> bool:
-    now, q = time.time(), _hits[ip]
-    while q and q[0] < now - 600:
-        q.popleft()
-    if len(q) >= config.RATE_LIMIT:
-        return True
-    q.append(now)
-    return False
+    return _over("ip:" + ip, config.RATE_LIMIT, 600)
+
+
+def phone_limited(phone: str) -> bool:
+    return _over("tel:" + phone, config.RATE_LIMIT_PHONE, 3600)
+
+
+def retry_loop(interval: int = 300):
+    """Đẩy lại hàng chờ Google Sheets mỗi 5 phút, kể cả khi không có đơn mới."""
+    while True:
+        time.sleep(interval)
+        try:
+            left = STORE.retry_pending()
+            if left:
+                log.warning("còn %s đơn chờ đẩy Google Sheets", left)
+        except Exception:
+            log.exception("đẩy lại hàng chờ lỗi")
 
 
 class BadRequest(Exception):
@@ -65,6 +88,13 @@ class Handler(BaseHTTPRequestHandler):
 
     def log_message(self, fmt, *args):
         log.info("%s %s", self.address_string(), fmt % args)
+
+    def client_ip(self) -> str:
+        if config.TRUST_PROXY:
+            fwd = self.headers.get("X-Forwarded-For", "")
+            if fwd:
+                return fwd.split(",")[-1].strip()   # IP do proxy của mình thêm vào cuối
+        return self.client_address[0]
 
     def _authorized(self) -> bool:
         given = self.headers.get("X-Webhook-Secret", "")
@@ -110,7 +140,7 @@ class Handler(BaseHTTPRequestHandler):
                 if not self._authorized():
                     return self._json(401, {"error": "sai secret"})
             elif path == "/api/booking":
-                if rate_limited(self.client_address[0]):
+                if rate_limited(self.client_ip()):
                     return self._json(429, {"error": "gửi quá nhiều, vui lòng gọi điện cho quán"})
             else:
                 return self._json(404, {"error": "not found"})
@@ -119,6 +149,8 @@ class Handler(BaseHTTPRequestHandler):
             if path == "/api/booking" and isinstance(data, dict) and data.pop("website", ""):
                 return self._json(201, {"status": "created"})   # bẫy bot: ô ẩn có chữ thì bỏ qua đơn
             booking = normalize_booking(data)
+            if path == "/api/booking" and phone_limited(booking["phone"]):
+                return self._json(429, {"error": "số điện thoại này đã gửi nhiều đơn, vui lòng gọi điện cho quán"})
         except BadRequest as e:
             return self._json(e.code, {"error": str(e)})
         except ValidationError as e:
@@ -158,6 +190,7 @@ def main():
     port = config.env_int("PORT", 8080)
     if not SECRET:
         log.warning("chưa đặt WEBHOOK_SECRET: /webhook/booking và /report sẽ từ chối mọi yêu cầu")
+    threading.Thread(target=retry_loop, daemon=True).start()
     log.info("listening on %s", port)
     Server(("0.0.0.0", port), Handler).serve_forever()
 

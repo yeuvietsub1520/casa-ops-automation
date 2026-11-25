@@ -1,4 +1,5 @@
 """Kiểm tra và chuẩn hóa dữ liệu đặt bàn (JSON)."""
+import logging
 import re
 from datetime import datetime, timedelta
 
@@ -62,7 +63,12 @@ def _parse_hours(spec: str):
     return out
 
 
-HOURS = _parse_hours(config.OPEN_HOURS)
+DEFAULT_HOURS = "mon-fri=07:30-24:00;sat-sun=07:30-24:30"
+try:
+    HOURS = _parse_hours(config.OPEN_HOURS)
+except (ValueError, IndexError):
+    logging.getLogger("config").warning("OPEN_HOURS=%r sai định dạng, dùng mặc định %s", config.OPEN_HOURS, DEFAULT_HOURS)
+    HOURS = _parse_hours(DEFAULT_HOURS)
 
 
 def is_open_for_booking(t: datetime) -> bool:

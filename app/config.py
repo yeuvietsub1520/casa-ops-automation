@@ -28,3 +28,8 @@ MAX_DAYS_AHEAD = env_int("MAX_DAYS_AHEAD", 90)
 LARGE_PARTY = env_int("LARGE_PARTY", 10)
 RATE_LIMIT = env_int("RATE_LIMIT_PER_10MIN", 10)     # số đơn tối đa mỗi IP trong 10 phút ở form công khai
 MAX_BODY = 16 * 1024
+RATE_LIMIT_PHONE = env_int("RATE_LIMIT_PHONE_PER_HOUR", 5)   # số đơn tối đa mỗi số điện thoại trong 1 giờ
+# Đặt TRUST_PROXY=1 khi chạy sau Caddy/Nginx: lấy IP khách từ X-Forwarded-For do proxy của mình thêm vào.
+# Không đặt khi chạy trực tiếp, để khách không tự sửa header lách giới hạn.
+TRUST_PROXY = os.getenv("TRUST_PROXY", "") == "1"
+DATA_DIR = os.path.dirname(os.path.abspath(os.getenv("BOOKINGS_CSV", "bookings.csv")))

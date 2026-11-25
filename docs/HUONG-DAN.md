@@ -12,7 +12,7 @@ Hệ thống có một nơi duy nhất kiểm và lưu đơn (ops-api). Form tr�
 
 ## 2. Đã kiểm thử những gì
 
-### 2.1 Kiểm thử tự động: 22/22 đạt
+### 2.1 Kiểm thử tự động: 28/28 đạt
 ![Kiểm thử](img/3-kiem-thu.png)
 
 ### 2.2 Chạy thử với tình huống của Casa Mika
@@ -117,3 +117,18 @@ Thêm trang /reserve trỏ tới form, hoặc đổi nút Reserve. Chốt giờ 
 
 ## 6. Khi phỏng vấn, giải thích trong 1 phút
 "Khách đặt trên web, hoặc qua Zalo, Facebook rồi n8n chuyển vào, đều về một máy chủ Python. Máy chủ kiểm số điện thoại kể cả số nước ngoài, giờ theo giờ Việt Nam và giờ mở cửa, chống trùng kể cả khi nhiều đơn gửi cùng lúc, rồi lưu và đẩy sang Google Sheet. Sheet lỗi thì đơn vẫn giữ và đẩy lại sau. Quản lý nhận tin ngay trên Telegram hoặc Zalo, tiệc riêng và đoàn lớn được đánh dấu, 22h có báo cáo. Em đã nhờ một AI agent khác kiểm thử độc lập, sửa hết lỗi nó tìm ra, mỗi lỗi có bài kiểm thử riêng. Phần Google Reserve, sơ đồ bàn và POS em cần xem hệ thống của quán để nối tiếp."
+
+### Vòng kiểm thử 2 của Muse (25/11/2026)
+
+| Mã | Lỗi | Đã sửa |
+|---|---|---|
+| M01 | Sau proxy, mọi khách chung một IP | `TRUST_PROXY=1` thì lấy IP từ X-Forwarded-For |
+| M02 | Hàng chờ Sheets bị xóa trước khi đẩy | Chỉ thay file (atomic) sau khi đẩy xong |
+| M03 | Một dòng hỏng làm sập hàng chờ | Bỏ qua dòng hỏng, chép sang file `.bad` |
+| M04 | File báo tin lỗi lộ số điện thoại | Che số, ghi cạnh file đơn |
+| M05 | Thiếu `.env` thì compose không chạy | `required: false` |
+| M06 | Hàng chờ chỉ đẩy lại khi có đơn mới | Luồng nền đẩy lại mỗi 5 phút |
+| M08 | `OPEN_HOURS` sai làm sập máy chủ | Ghi cảnh báo, dùng giờ mặc định |
+| M18 | Một số điện thoại gửi đơn liên tục | Tối đa 5 đơn mỗi giờ (chỉnh được) |
+
+Muse cũng báo M07, M09, M14, M21 nhưng kiểm tra lại thì code đã đúng sẵn.

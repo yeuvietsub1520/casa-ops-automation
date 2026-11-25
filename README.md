@@ -57,7 +57,7 @@ Xem [docs/HUONG-DAN.md](docs/HUONG-DAN.md). Tóm tắt: `cp .env.example .env`, 
 
 ## Kết quả kiểm thật
 
-- 21/22 bài kiểm thử đạt.
+- 28/28 bài kiểm thử đạt (thêm 6 bài cho các lỗi Muse tìm ra ở vòng 2).
 - Muse (AI agent kiểm thử độc lập) chạy 35 trường hợp khó và soát code ngày 25/11/2026. Các lỗi tìm được (ghi trùng khi gửi cùng lúc, múi giờ, số Trung Quốc, form vỡ với ngôn ngữ lạ, secret mặc định tắt…) đã sửa trong bản này, mỗi lỗi có bài kiểm thử riêng.
 - Quét casamika.com/en/ ngày 25/11/2026: 16 link, 1 link hỏng `/en/career/` (404).
 
