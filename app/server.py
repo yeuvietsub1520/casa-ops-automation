@@ -36,6 +36,12 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         if self.path == "/health":
             return self._json(200, {"ok": True, "bookings": len(STORE.rows())})
+        if self.path.split("?")[0] in ("/", "/booking"):
+            html = open(os.path.join(os.path.dirname(__file__), "static", "booking.html"), "rb").read()
+            self.send_response(200)
+            self.send_header("Content-Type", "text/html; charset=utf-8")
+            self.end_headers()
+            return self.wfile.write(html)
         if self.path == "/report":
             return self._json(200, {"text": daily_report(STORE.rows())})
         self._json(404, {"error": "not found"})
@@ -63,10 +69,13 @@ class Handler(BaseHTTPRequestHandler):
             notify.send(f"⚠️ LỖI ghi đơn đặt bàn {booking['name']} {booking['time']}: {e}")
             return self._json(502, {"error": "lưu thất bại, đã báo quản lý"})
 
-        tag = "🎉 TIỆC LỚN " if booking["party_size"] >= LARGE_PARTY else ""
+        tag = "🥂 TIỆC RIÊNG " if booking["type"] == "event" else ""
+        if booking["party_size"] >= LARGE_PARTY:
+            tag += "🎉 ĐOÀN LỚN "
         try:
             notify.send(f"{tag}Đặt bàn mới: {booking['name']} · {booking['party_size']} khách · "
-                        f"{booking['time']} · nguồn {booking['source']} · {booking['phone']}")
+                        f"{booking['time']} · nguồn {booking['source']} · {booking['lang']} · {booking['phone']}"
+                        + (f" · ghi chú: {booking['note']}" if booking['note'] else ""))
         except Exception as e:
             log.error("báo tin lỗi: %s", e)
         self._json(201, {"status": "created", "key": key})

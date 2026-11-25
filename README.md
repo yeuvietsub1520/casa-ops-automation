@@ -54,7 +54,8 @@ docker compose exec n8n n8n import:workflow --separate --input=/workflows
 
 ## Kết quả đo thật
 
-- 6/6 bài kiểm thử đạt (chuẩn hóa, thiếu trường, giờ sai, thử lại khi mạng lỗi, luồng webhook 201/duplicate/422, báo cáo).
+- 7/7 bài kiểm thử đạt (chuẩn hóa, thiếu trường, giờ sai, giờ đã qua, thử lại khi mạng lỗi, luồng webhook 201/duplicate/422, form đặt bàn, báo cáo).
+- Form đặt bàn 5 ngôn ngữ tại `/booking`, có loại tiệc riêng. Hướng dẫn đầy đủ kèm ảnh: [docs/HUONG-DAN.md](docs/HUONG-DAN.md).
 - Quét casamika.com/en/ ngày 25/11/2026: 16 link, phát hiện 1 link hỏng `/en/career/` trả 404.
 
 ## Bảo mật

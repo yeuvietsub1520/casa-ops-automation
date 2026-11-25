@@ -1,6 +1,6 @@
 """Kiểm tra và chuẩn hóa dữ liệu đặt bàn nhận từ webhook (JSON)."""
 import re
-from datetime import datetime
+from datetime import datetime, timedelta
 
 SOURCES = {"google", "facebook", "zalo", "website", "phone", "walk-in"}
 PHONE_RE = re.compile(r"^\+?\d{9,12}$")
@@ -39,7 +39,12 @@ def normalize_booking(data: dict) -> dict:
     if source not in SOURCES:
         source = "other"
 
+    btype = "event" if str(data.get("type", "table")).lower() == "event" else "table"
+    if when < datetime.now() - timedelta(hours=1):
+        raise ValidationError("giờ đặt đã qua")
+
     return {
+        "type": btype,
         "name": str(data["name"]).strip()[:80],
         "phone": phone,
         "party_size": party,

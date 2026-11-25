@@ -6,7 +6,7 @@ import threading
 import urllib.request
 from datetime import datetime
 
-FIELDS = ["received_at", "name", "phone", "party_size", "time", "source", "note", "lang"]
+FIELDS = ["received_at", "type", "name", "phone", "party_size", "time", "source", "note", "lang"]
 _lock = threading.Lock()
 
 

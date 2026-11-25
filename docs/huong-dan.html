@@ -1,0 +1,54 @@
+<html><head><meta charset="utf-8"><style>body{font-family:Arial;font-size:10.5pt;line-height:1.45;color:#222;margin:14mm}h1{color:#3f5a3c;font-size:18pt}h2{color:#3f5a3c;border-bottom:2px solid #3f5a3c;padding-bottom:2px;margin-top:18px}h3{color:#444}img{max-width:100%;border:1px solid #ddd;border-radius:6px;margin:4px 0}table{border-collapse:collapse;width:100%;font-size:9.5pt;margin:6px 0}td,th{border:1px solid #ccc;padding:5px;vertical-align:top}th{background:#eef3ec}td img{max-width:100%}pre{background:#1e1f22;color:#d7f5d0;padding:10px;border-radius:6px;font-size:9pt;white-space:pre-wrap}code{background:#f2f2f2;padding:0 3px}.li{margin:2px 0 2px 10px}h2{page-break-after:avoid}img{page-break-inside:avoid}</style></head><body><h1>Hướng dẫn casa-ops-automation cho Casa Mika</h1>
+<p>Tài liệu giải thích hệ thống làm gì, đã kiểm thử ra sao, khớp với cách Casa Mika vận hành tới đâu, và cách chạy từng bước.</p>
+<h2>1. Hệ thống giải quyết việc gì của Casa Mika</h2>
+<p>Casa Mika nhận khách qua nhiều đường: nút Reserve dẫn sang Google Maps, điện thoại, Zalo, Facebook, khách đặt tiệc riêng và tiệc cưới. Quán mở từ sáng tới khuya, nhiều ca, khách nói nhiều thứ tiếng (website có 7 ngôn ngữ). Khi đơn nằm rải rác ở nhiều nơi, dễ sót đơn, quản lý không biết tối nay có bao nhiêu khách, tiệc lớn không được chuẩn bị trước.</p>
+<p>Hệ thống gom mọi đơn về một Google Sheet, báo ngay cho quản lý qua Telegram hoặc Zalo, đánh dấu tiệc riêng và đoàn lớn, gửi báo cáo lúc 22h, và tự báo khi có lỗi.</p>
+<p><img src="img/0-kien-truc.png" alt="Kiến trúc"></p>
+<h2>2. Đã kiểm thử những gì</h2>
+<h3>2.1 Kiểm thử tự động: 7/7 đạt</h3>
+<p>Kiểm: chuẩn hóa số điện thoại +84, thiếu trường, giờ sai định dạng, giờ đã qua, gửi thông báo thử lại 3 lần khi mạng lỗi, luồng webhook đầy đủ, báo cáo ngày.</p>
+<p><img src="img/3-kiem-thu.png" alt="Kiểm thử"></p>
+<h3>2.2 Chạy thử với tình huống của Casa Mika</h3>
+<p class="li">- Khách Hàn đặt bàn 2 người lúc 19:30, ghi chú &quot;bàn gần piano&quot; → nhận đơn.</p>
+<p class="li">- Khách Nga đặt tiệc sinh nhật 25 người qua Zalo → nhận đơn, gắn nhãn tiệc riêng và đoàn lớn.</p>
+<p class="li">- Gửi lại đơn của khách Hàn → hệ thống nhận ra trùng, không ghi hai lần.</p>
+<p class="li">- Số điện thoại &quot;abc&quot; → bị từ chối, báo rõ lý do.</p>
+<p><img src="img/4-webhook.png" alt="Webhook"></p>
+<h3>2.3 Tin báo quản lý và báo cáo cuối ngày</h3>
+<p><img src="img/5-bao-tin-bao-cao.png" alt="Báo tin và báo cáo"></p>
+<h3>2.4 Quét link hỏng trên casamika.com (chạy thật ngày 25/11/2026)</h3>
+<p><img src="img/6-kiem-link.png" alt="Kiểm link"></p>
+<h2>3. Form đặt bàn ngay trên website, 5 ngôn ngữ</h2>
+<p>Hiện nút Reserve đưa khách rời website sang Google Maps, quán không giữ được dữ liệu khách. Form này đặt ngay trên casamika.com, có tiếng Việt, Anh, Hàn, Trung, Nga, có lựa chọn &quot;Tiệc riêng / sự kiện&quot;. Đơn đi thẳng vào hệ thống ở trên.</p>
+<table><tr><th>Tiếng Việt</th><th>Tiếng Hàn</th></tr><tr><td><img src="img/1-form-vi.png" alt="Form VI"></td><td><img src="img/2-form-ko.png" alt="Form KO"></td></tr></table>
+<h2>4. Khớp với mô hình Casa Mika tới đâu (đánh giá thật)</h2>
+<table><tr><th>Nhu cầu của Casa Mika</th><th>Hệ thống hiện tại</th><th>Mức khớp</th></tr><tr><td>Gom đơn từ web, Zalo, Facebook về một chỗ</td><td>Có: webhook + n8n + Google Sheet</td><td>Khớp</td></tr><tr><td>Tiệc riêng, tiệc cưới, đoàn lớn</td><td>Có: trường <code>type</code>, nhãn 🥂 và 🎉, ngưỡng đoàn lớn chỉnh được</td><td>Khớp</td></tr><tr><td>Khách nhiều quốc tịch</td><td>Form 5 ngôn ngữ, lưu ngôn ngữ khách để nhân viên chuẩn bị</td><td>Khớp một phần (web có 7 ngôn ngữ, form chưa có Đức, Thái)</td></tr><tr><td>Báo quản lý qua Zalo hoặc Telegram</td><td>Có cả hai, chọn bằng một biến</td><td>Khớp</td></tr><tr><td>Đơn từ Google Maps Reserve</td><td>Chưa nối tự động. Google chỉ mở cho đối tác đặt bàn chính thức. Tạm thời lễ tân nhập vào Sheet, hoặc thay nút Reserve bằng form của quán</td><td>Chưa khớp</td></tr><tr><td>Đơn qua điện thoại</td><td>Lễ tân nhập Sheet hoặc dùng form</td><td>Khớp một phần</td></tr><tr><td>Quản lý số bàn, sức chứa từng khu (vườn, nhà kính)</td><td>Chưa có</td><td>Chưa khớp, làm ở tháng 2</td></tr><tr><td>Nhắn xác nhận tự động cho khách</td><td>Chưa có. Zalo OA chỉ nhắn được khách đã quan tâm OA hoặc qua ZNS có mẫu được duyệt</td><td>Chưa khớp, cần OA của quán</td></tr><tr><td>Nối với POS đang dùng</td><td>Chưa biết quán dùng POS nào</td><td>Cần hỏi khi phỏng vấn</td></tr></table>
+<p><b>Kết luận:</b> phần lõi (nhận đơn, kiểm dữ liệu, gom về Sheet, báo quản lý, báo cáo, cảnh báo lỗi) đã chạy và khớp. Ba phần cần thông tin nội bộ mới làm tiếp được: Google Reserve, sơ đồ bàn, Zalo OA và POS.</p>
+<h2>5. Cách chạy từng bước</h2>
+<h3>Bước 1: Chạy thử trên máy (5 phút)</h3>
+<pre>
+git clone https://github.com/yeuvietsub1520/casa-ops-automation
+cd casa-ops-automation
+python3 -m unittest discover -s tests -v     # 7 bài phải OK
+NOTIFY_CHANNEL=log python3 -m app.server     # mở http://localhost:8080/booking
+</pre>
+<p>Điền form, bấm Gửi. Cửa sổ terminal hiện dòng <code>NOTIFY: Đặt bàn mới…</code>.</p>
+<h3>Bước 2: Nối Telegram (10 phút)</h3>
+<p class="li">1. Trong Telegram, nhắn @BotFather lệnh <code>/newbot</code>, đặt tên, nhận token.</p>
+<p class="li">2. Thêm bot vào nhóm quản lý, lấy chat id.</p>
+<p class="li">3. Tạo file <code>.env</code> từ <code>.env.example</code>, điền <code>NOTIFY_CHANNEL=telegram</code>, <code>TELEGRAM_BOT_TOKEN</code>, <code>TELEGRAM_CHAT_ID</code>.</p>
+<p class="li">4. Chạy lại server, gửi một đơn thử, tin nhắn hiện trong nhóm.</p>
+<h3>Bước 3: Nối Zalo OA (cần OA của quán)</h3>
+<p>Điền <code>NOTIFY_CHANNEL=zalo</code>, <code>ZALO_OA_TOKEN</code>, <code>ZALO_USER_ID</code> (người nhận phải là người đã quan tâm OA).</p>
+<h3>Bước 4: Google Sheet</h3>
+<p>Tạo Sheet có trang &quot;DatBan&quot;. Trong n8n tạo kết nối Google Sheets, điền <code>SHEET_ID</code> vào <code>.env</code>.</p>
+<h3>Bước 5: Đưa lên VPS Linux</h3>
+<pre>
+docker compose up -d
+docker compose exec n8n n8n import:workflow --separate --input=/workflows
+</pre>
+<p>Mở n8n ở cổng 5678, bật 3 workflow: đặt bàn, cảnh báo lỗi, báo cáo 22h.</p>
+<h3>Bước 6: Đặt form lên casamika.com</h3>
+<p>Thêm trang /reserve hoặc đổi nút Reserve trỏ tới form. Bật <code>WEBHOOK_SECRET</code> khi đi thật.</p>
+<h2>6. Khi phỏng vấn, giải thích trong 1 phút</h2>
+<p>&quot;Khách đặt qua web, Zalo hay Facebook đều đi vào một webhook. Hệ thống kiểm tra số điện thoại, giờ, số khách, chống trùng, rồi ghi vào Google Sheet. Quản lý nhận tin ngay trên Telegram hoặc Zalo, tiệc riêng và đoàn lớn được đánh dấu. 22h có báo cáo trong ngày. Workflow nào lỗi thì báo về ngay. Phần Google Reserve, sơ đồ bàn và POS em cần xem hệ thống nội bộ của quán để nối tiếp.&quot;</p></body></html>

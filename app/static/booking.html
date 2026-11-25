@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Đặt bàn · Reserve</title>
+<style>
+body{margin:0;font-family:Georgia,serif;background:#f4f1ea;color:#2b2a26}
+.card{max-width:420px;width:calc(100% - 28px);box-sizing:border-box;margin:16px auto;background:#fff;border-radius:14px;padding:22px 22px 26px;box-shadow:0 6px 24px rgba(0,0,0,.08)}
+h1{font-size:22px;margin:0 0 4px;color:#3f5a3c}.sub{color:#777;font-size:13px;margin-bottom:14px}
+.langs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}.langs button{border:1px solid #cfc8b8;background:#fff;border-radius:16px;padding:3px 10px;cursor:pointer;font-size:12px}
+.langs button.on{background:#3f5a3c;color:#fff;border-color:#3f5a3c}
+label{display:block;font-size:13px;margin:10px 0 4px;font-family:Arial,sans-serif}
+input,select,textarea{width:100%;box-sizing:border-box;padding:10px;border:1px solid #d8d2c4;border-radius:8px;font-size:15px}
+.row{display:flex;gap:10px}.row>div{flex:1}
+button.go{margin-top:16px;width:100%;padding:12px;border:0;border-radius:8px;background:#3f5a3c;color:#fff;font-size:16px;cursor:pointer}
+#msg{margin-top:12px;font-family:Arial,sans-serif;font-size:14px}
+</style></head><body>
+<div class="card">
+<h1 data-t="title">Đặt bàn</h1><div class="sub" data-t="sub">Khu vườn · Rượu vang · Piano từ 19:00</div>
+<div class="langs" id="langs"></div>
+<form id="f">
+<label data-t="name">Họ tên</label><input name="name" required>
+<label data-t="phone">Số điện thoại / Zalo</label><input name="phone" required inputmode="tel">
+<div class="row"><div><label data-t="date">Ngày</label><input type="date" name="date" required></div>
+<div><label data-t="hour">Giờ</label><input type="time" name="hour" required></div></div>
+<div class="row"><div><label data-t="party">Số khách</label><input type="number" name="party_size" min="1" max="300" value="2" required></div>
+<div><label data-t="type">Loại</label><select name="type"><option value="table" data-t="t1">Đặt bàn</option><option value="event" data-t="t2">Tiệc riêng / sự kiện</option></select></div></div>
+<label data-t="note">Ghi chú</label><textarea name="note" rows="2"></textarea>
+<button class="go" data-t="send">Gửi yêu cầu</button>
+<div id="msg"></div>
+</form></div>
+<script>
+const T={vi:{title:"Đặt bàn",sub:"Khu vườn · Rượu vang · Piano từ 19:00",name:"Họ tên",phone:"Số điện thoại / Zalo",date:"Ngày",hour:"Giờ",party:"Số khách",type:"Loại",t1:"Đặt bàn",t2:"Tiệc riêng / sự kiện",note:"Ghi chú",send:"Gửi yêu cầu",ok:"Đã nhận yêu cầu. Nhà hàng sẽ xác nhận qua điện thoại hoặc Zalo.",dup:"Yêu cầu này đã được gửi trước đó."},
+en:{title:"Reserve a table",sub:"Garden · Wine · Live piano from 7pm",name:"Full name",phone:"Phone / WhatsApp / Zalo",date:"Date",hour:"Time",party:"Guests",type:"Type",t1:"Table",t2:"Private event",note:"Note",send:"Send request",ok:"Request received. We will confirm by phone or message.",dup:"This request was already sent."},
+ko:{title:"테이블 예약",sub:"가든 · 와인 · 저녁 7시 피아노 라이브",name:"이름",phone:"전화 / 카카오톡",date:"날짜",hour:"시간",party:"인원",type:"종류",t1:"테이블",t2:"프라이빗 파티",note:"메모",send:"예약 요청",ok:"요청이 접수되었습니다. 전화 또는 메시지로 확인드리겠습니다.",dup:"이미 접수된 요청입니다."},
+zh:{title:"预订餐位",sub:"花园 · 葡萄酒 · 晚上7点钢琴现场",name:"姓名",phone:"电话 / 微信",date:"日期",hour:"时间",party:"人数",type:"类型",t1:"订座",t2:"私人聚会",note:"备注",send:"提交预订",ok:"已收到您的预订，我们会通过电话或消息确认。",dup:"该预订已提交过。"},
+ru:{title:"Бронирование",sub:"Сад · Вино · Живое фортепиано с 19:00",name:"Имя",phone:"Телефон / Telegram",date:"Дата",hour:"Время",party:"Гостей",type:"Тип",t1:"Столик",t2:"Частное мероприятие",note:"Комментарий",send:"Отправить",ok:"Заявка получена. Мы подтвердим по телефону или сообщением.",dup:"Эта заявка уже была отправлена."}};
+let L=new URLSearchParams(location.search).get("lang")||"vi";
+function apply(){document.documentElement.lang=L;document.querySelectorAll("[data-t]").forEach(e=>e.textContent=T[L][e.dataset.t]);
+document.getElementById("langs").innerHTML=Object.keys(T).map(k=>`<button type="button" class="${k==L?'on':''}" onclick="L='${k}';apply()">${k.toUpperCase()}</button>`).join("")}
+apply();
+document.getElementById("f").onsubmit=async e=>{e.preventDefault();const d=Object.fromEntries(new FormData(e.target));
+const body={name:d.name,phone:d.phone,party_size:+d.party_size,time:d.date+"T"+d.hour,type:d.type,note:d.note,source:"website",lang:L};
+const r=await fetch("/webhook/booking",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+const j=await r.json();const m=document.getElementById("msg");
+m.style.color=r.ok?"#3f5a3c":"#b03030";m.textContent=r.status==201?T[L].ok:j.status=="duplicate"?T[L].dup:(j.error||"Error")};
+</script></body></html>
