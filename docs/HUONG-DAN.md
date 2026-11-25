@@ -12,7 +12,7 @@ Hệ thống có một nơi duy nhất kiểm và lưu đơn (ops-api). Form tr�
 
 ## 2. Đã kiểm thử những gì
 
-### 2.1 Kiểm thử tự động: 32/32 đạt
+### 2.1 Kiểm thử tự động: 33/33 đạt
 ![Kiểm thử](img/3-kiem-thu.png)
 
 ### 2.2 Chạy thử với tình huống của Casa Mika

@@ -313,3 +313,14 @@ class LlmParseTest(unittest.TestCase):
         with mock.patch.dict(os.environ, {"ANTHROPIC_API_KEY": "k"}), \
                 mock.patch.object(llm_parse, "_call_llm", side_effect=OSError("timeout")):
             self.assertEqual(llm_parse.parse_message("6 người 19h30")["engine"], "rules")
+
+    def test_llm_reply_with_thinking_block(self):
+        """Lỗi tìm ra khi chạy Claude API thật: khối đầu là 'thinking', không có 'text'."""
+        from app import llm_parse
+        reply = {"content": [{"type": "thinking", "thinking": "..."},
+                             {"type": "text", "text": '```json\n{"name": "Kim", "party_size": 2}\n```'}]}
+        fake = mock.MagicMock()
+        fake.__enter__.return_value.read.return_value = json.dumps(reply).encode()
+        with mock.patch.object(llm_parse.urllib.request, "urlopen", return_value=fake), \
+                mock.patch.object(llm_parse.json, "load", return_value=reply):
+            self.assertEqual(llm_parse._call_llm("x", "k"), {"name": "Kim", "party_size": 2})

@@ -57,7 +57,7 @@ Xem [docs/HUONG-DAN.md](docs/HUONG-DAN.md). Tóm tắt: `cp .env.example .env`, 
 
 ## Kết quả kiểm thật
 
-- 32/32 bài kiểm thử đạt (gồm 6 bài cho lỗi Muse tìm ra ở vòng 2 và 4 bài cho phần đọc tin nhắn bằng LLM).
+- 33/33 bài kiểm thử đạt (gồm 6 bài cho lỗi Muse tìm ra ở vòng 2 và 4 bài cho phần đọc tin nhắn bằng LLM).
 - Muse (AI agent kiểm thử độc lập) chạy 35 trường hợp khó và soát code ngày 25/11/2026. Các lỗi tìm được (ghi trùng khi gửi cùng lúc, múi giờ, số Trung Quốc, form vỡ với ngôn ngữ lạ, secret mặc định tắt…) đã sửa trong bản này, mỗi lỗi có bài kiểm thử riêng.
 - Quét casamika.com/en/ ngày 25/11/2026: 16 link, 1 link hỏng `/en/career/` (404).
 
@@ -78,4 +78,5 @@ Kết quả luôn qua cùng luật kiểm tra với form, chỉ là bản nháp 
 ## Bằng chứng
 
 - `docs/n8n-import-25-11-2026.md`: nhập 3 workflow vào n8n 2.49.5.
+- `docs/llm-chay-that-25-11-2026.md`: chạy thật Claude API với 6 tin nhắn (Việt, Hàn, Anh, Trung, lệnh lạ, thiếu thông tin).
 - `docs/kiem-tra-casamika-25-11-2026.md`: số liệu kiểm tra casamika.com bằng curl.
