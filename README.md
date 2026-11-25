@@ -77,6 +77,7 @@ Kết quả luôn qua cùng luật kiểm tra với form, chỉ là bản nháp 
 
 ## Bằng chứng
 
+- `docs/n8n-chay-that-25-11-2026.md`: chạy thật n8n → ops-api → Telegram, báo cáo gửi về Telegram.
 - `docs/n8n-import-25-11-2026.md`: nhập 3 workflow vào n8n 2.49.5.
 - `docs/llm-chay-that-25-11-2026.md`: chạy thật Claude API với 6 tin nhắn (Việt, Hàn, Anh, Trung, lệnh lạ, thiếu thông tin).
 - `docs/kiem-tra-casamika-25-11-2026.md`: số liệu kiểm tra casamika.com bằng curl.

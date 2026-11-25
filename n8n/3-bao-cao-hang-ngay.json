@@ -95,6 +95,19 @@
       },
       "retryOnFail": true,
       "maxTries": 3
+    },
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "name": "Chay tay (CLI hoac workflow khac)",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        200
+      ],
+      "id": "b7c1f0aa-casa-4e2d-8f11-manualrun0003"
     }
   ],
   "connections": {
@@ -130,6 +143,17 @@
           }
         ],
         []
+      ]
+    },
+    "Chay tay (CLI hoac workflow khac)": {
+      "main": [
+        [
+          {
+            "node": "Lay bao cao",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     }
   },

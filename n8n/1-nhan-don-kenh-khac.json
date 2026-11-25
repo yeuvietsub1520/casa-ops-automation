@@ -16,7 +16,8 @@
         "authentication": "headerAuth",
         "responseMode": "responseNode",
         "options": {}
-      }
+      },
+      "webhookId": "5b0f2c1e-casa-4a1b-9d0e-booking00001"
     },
     {
       "id": "2",
